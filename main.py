@@ -30,7 +30,7 @@ CENTAVO = Decimal("0.01")
 PRECISION_TASA = Decimal("0.00000001")
 VERSION_CALCULO = "frances-ea-v2"
 PLAZO_MAXIMO_MESES = 1200
-DIRECTORIO_WEB = Path(__file__).with_name("frontend")
+DIRECTORIO_WEB = Path(__file__).resolve().parent
 app.mount("/assets", StaticFiles(directory=DIRECTORIO_WEB), name="assets")
 
 
