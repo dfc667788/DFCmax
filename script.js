@@ -1096,7 +1096,7 @@
     $("download-status").textContent = "Preparando tu plan…";
 
     try {
-      const response = await fetch("https://dfcmax.onrender.com/excel", {
+      const response = await fetch("https://dfcmax.onrender.com/previsualizar-credito/excel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),
