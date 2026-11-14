@@ -280,7 +280,7 @@
   }
 
   async function fetchPreview(params, signal) {
-   const response = await fetch("https://dfcmax.onrender.com", {
+   const response = await fetch("https://dfcmax.onrender.com/previsualizar-credito", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
