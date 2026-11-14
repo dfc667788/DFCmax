@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163d2b">
+  <meta name="description" content="Explora tu crédito, visualiza cada pago y descubre cómo terminar antes con Finia.">
+  <title>Finia · Tu crédito, con claridad</title>
+  <link rel="stylesheet" href="estilos.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Ir al simulador</a>
+
+  <aside class="rail" aria-label="Navegación principal">
+    <a class="brand" href="/simulador" aria-label="Finia, inicio">F</a>
+
+    <nav class="rail-nav" aria-label="Secciones del simulador">
+      <a class="nav-icon selected" href="#contenido" aria-label="Simulador" aria-current="page">
+        <span aria-hidden="true">▦</span>
+      </a>
+      <a class="nav-icon" href="#plan" aria-label="Ver tabla de pagos">
+        <span aria-hidden="true">▤</span>
+      </a>
+    </nav>
+
+    <button class="nav-icon help-trigger" type="button" aria-label="Cómo funciona el simulador">
+      <span aria-hidden="true">?</span>
+    </button>
+
+    <span class="rail-caption">HAZLO POSIBLE</span>
+  </aside>
+
+  <main id="contenido" class="workspace">
+    <header class="topbar">
+      <a class="wordmark" href="/simulador">finia<span>®</span></a>
+
+      <div class="breadcrumb">
+        <span>Tu espacio financiero</span>
+        <span aria-hidden="true">/</span>
+        <strong>Simulador de crédito</strong>
+      </div>
+
+      <button class="quiet-button help-trigger" type="button">
+        Cómo funciona <span aria-hidden="true">↗</span>
+      </button>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <div class="eyebrow">
+          <span class="tiny-star" aria-hidden="true">✳</span>
+          DECISIONES CON CLARIDAD
+        </div>
+
+        <h1 id="page-title">Tu crédito. <span>Tu siguiente paso.</span></h1>
+        <p>Mueve los números. Descubre lo que puedes lograr.</p>
+      </div>
+
+      <div class="intro-badge">
+        <span class="status-dot" aria-hidden="true"></span>
+        A tu ritmo, en tiempo real
+        <small>Valores en pesos colombianos · COP</small>
+      </div>
+    </section>
+
+    <div class="simulator-grid">
+      <section class="input-card" aria-labelledby="inputs-title">
+        <div class="card-heading">
+          <h2 id="inputs-title">Diseña tu escenario</h2>
+          <button id="reset" class="icon-button" type="button" title="Restablecer valores" aria-label="Restablecer valores">
+            <span aria-hidden="true">↻</span>
+          </button>
+        </div>
+
+        <form id="credit-form" novalidate>
+          <div class="control-group">
+            <label for="monto">¿Cuánto necesitas?</label>
+
+            <div class="number-field amount-field">
+              <span aria-hidden="true">$</span>
+              <input id="monto" name="monto" type="text" inputmode="numeric" value="30.000.000" autocomplete="off" aria-describedby="monto-error">
+              <span class="unit">COP</span>
+            </div>
+
+            <input id="monto-range" class="range" type="range" min="1000000" max="150000000" step="100000" value="30000000" aria-label="Monto del préstamo en pesos">
+
+            <div class="range-labels">
+              <span>$1 millón</span>
+              <span id="amount-max-label">$150 millones</span>
+            </div>
+
+            <div class="amount-presets" aria-label="Montos sugeridos">
+              <button type="button" data-amount="15000000">15 M</button>
+              <button type="button" data-amount="30000000" class="active">30 M</button>
+              <button type="button" data-amount="80000000">80 M</button>
+              <button type="button" data-amount="150000000">150 M</button>
+            </div>
+
+            <p id="monto-error" class="field-error"></p>
+          </div>
+
+          <div class="control-group">
+            <div class="label-row">
+              <label for="tasa">Tasa de interés</label>
+              <span class="field-tag">Efectiva anual</span>
+            </div>
+
+            <div class="number-field">
+              <input id="tasa" name="tasa_interes_anual" type="number" min="0" max="1000" step="0.1" value="18.5" aria-describedby="tasa-error">
+              <span class="unit">% EA</span>
+            </div>
+
+            <input id="tasa-range" class="range" type="range" min="0" max="60" step="0.1" value="18.5" aria-label="Tasa efectiva anual">
+
+            <div class="range-labels">
+              <span>0 %</span>
+              <span id="rate-max-label">60 %</span>
+            </div>
+
+            <p id="tasa-error" class="field-error"></p>
+          </div>
+
+          <div class="control-group">
+            <div class="label-row">
+              <label for="plazo">¿En cuánto tiempo?</label>
+              <span id="years-label" class="field-tag">5 años</span>
+            </div>
+
+            <div class="number-field">
+              <input id="plazo" name="plazo_meses" type="number" min="1" max="1200" step="1" value="60" aria-describedby="plazo-error">
+              <span class="unit">meses</span>
+            </div>
+
+            <input id="plazo-range" class="range" type="range" min="1" max="1200" step="1" value="60" aria-label="Plazo del préstamo en meses">
+
+            <div class="range-labels">
+              <span>1 mes</span>
+              <span>1.200 meses</span>
+            </div>
+
+            <p id="plazo-error" class="field-error"></p>
+          </div>
+
+          <div class="extra-panel">
+            <div class="extra-title">
+              <span class="extra-icon" aria-hidden="true">↗</span>
+              <label for="extra">Un impulso extra</label>
+              <span class="mini-badge">OPCIONAL</span>
+            </div>
+
+            <p>Abona cada mes y llega antes a tu meta.</p>
+
+            <div class="number-field">
+              <span aria-hidden="true">$</span>
+              <input id="extra" name="pago_extraordinario" type="text" inputmode="numeric" value="200.000" aria-describedby="extra-error">
+              <span class="unit">/ mes</span>
+            </div>
+
+            <input id="extra-range" class="range" type="range" min="0" max="1000000" step="25000" value="200000" aria-label="Abono extraordinario mensual en pesos">
+
+            <button class="text-button" id="no-extra" type="button">Comparar sin abonos extras</button>
+            <p id="extra-error" class="field-error"></p>
+          </div>
+
+          <details class="advanced">
+            <summary>
+              Ajustes de tu proyección
+              <span aria-hidden="true">+</span>
+            </summary>
+
+            <div class="advanced-content">
+              <label for="seguro">Seguro por millón, cada mes</label>
+
+              <div class="number-field small">
+                <span aria-hidden="true">$</span>
+                <input id="seguro" type="number" min="0" max="1000000" step="1" value="1200" aria-describedby="seguro-help seguro-error">
+              </div>
+
+              <p id="seguro-help">Se calcula sobre el monto inicial. Puedes ajustar este supuesto a la tarifa de tu entidad.</p>
+              <p id="seguro-error" class="field-error"></p>
+
+              <label for="primera-cuota">Fecha de la primera cuota</label>
+              <input id="primera-cuota" class="date-field" type="date" required>
+            </div>
+          </details>
+        </form>
+
+        <div class="input-footer">
+          <span class="lock-icon" aria-hidden="true">◇</span>
+          Explora sin registrarte. Tú tienes el control.
+        </div>
+      </section>
+
+      <section class="results" id="results" aria-label="Resultados de la simulación" aria-busy="true">
+        <div class="results-toolbar">
+          <span id="scenario-label" class="eyebrow">TU ESCENARIO, EN PERSPECTIVA</span>
+
+          <span id="calculation-status" class="calculation-status" role="status">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Preparando tu escenario</span>
+          </span>
+        </div>
+
+        <div id="error-banner" class="error-banner" role="alert" hidden>
+          <span></span>
+          <button id="retry" type="button">Reintentar</button>
+        </div>
+
+        <section class="summary-card" aria-labelledby="summary-title">
+          <div class="monthly-summary">
+            <span class="eyebrow" id="summary-title">TU CUOTA MENSUAL FIJA</span>
+            <div id="monthly-payment" class="hero-value">—</div>
+
+            <span class="summary-note">
+              Incluye <strong id="monthly-insurance">—</strong> de seguro
+            </span>
+
+            <div id="extra-payment-note" class="extra-payment-note" hidden></div>
+          </div>
+
+          <div class="summary-divider" aria-hidden="true"></div>
+
+          <div class="summary-stat">
+            <span>Cuotas en total</span>
+            <div>
+              <strong id="payment-count">—</strong>
+              <span>meses</span>
+            </div>
+            <small id="term-saved">Tu plazo proyectado</small>
+          </div>
+
+          <div class="summary-stat finish-stat">
+            <span>Tu última cuota</span>
+            <strong id="finish-date">—</strong>
+            <small id="first-date-label">Desde tu primera cuota</small>
+          </div>
+        </section>
+
+        <section class="chart-card" aria-labelledby="balance-title">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow">EVOLUCIÓN DEL SALDO</div>
+              <h2 id="balance-title">Cada mes, más cerca.</h2>
+            </div>
+
+            <div class="chart-key">
+              <span><i class="line-key" aria-hidden="true"></i>Tu escenario</span>
+              <span id="baseline-key"><i class="line-key dashed" aria-hidden="true"></i>Sin abonos extras</span>
+            </div>
+          </div>
+
+          <div class="line-chart-wrap" id="line-chart-wrap">
+            <div id="balance-chart" class="balance-plot" role="img" aria-label="Saldo pendiente a lo largo de los meses. Usa las flechas para explorar cada mes." tabindex="0"></div>
+            <div id="chart-tooltip" class="chart-tooltip" hidden></div>
+          </div>
+
+          <div class="chart-footer">
+            <span>
+              <i class="status-dot" aria-hidden="true"></i>
+              <span id="chart-caption">Tu saldo, paso a paso.</span>
+            </span>
+            <span>Explora el gráfico <span aria-hidden="true">↔</span></span>
+          </div>
+        </section>
+
+        <div class="bottom-grid">
+          <section class="breakdown-card" aria-labelledby="breakdown-title">
+            <div class="section-heading">
+              <div>
+                <div class="eyebrow">CADA PESO CUENTA</div>
+                <h2 id="breakdown-title">¿A dónde va tu dinero?</h2>
+              </div>
+            </div>
+
+            <div class="breakdown-content">
+              <div class="donut-wrap">
+                <div id="payment-chart" class="payment-plot" role="img" aria-label="Distribución de pagos entre capital, intereses, seguros y abonos extras"></div>
+
+                <div class="donut-center">
+                  <span id="donut-center-label">COSTO TOTAL</span>
+                  <strong id="donut-center-value">—</strong>
+                  <small id="donut-center-percent">100 % de tus pagos</small>
+                </div>
+              </div>
+
+              <div id="breakdown-legend" class="breakdown-legend"></div>
+            </div>
+
+            <p class="breakdown-footnote">El capital se divide entre pagos ordinarios y extras, sin contar un peso dos veces.</p>
+          </section>
+
+          <section class="impact-card" aria-labelledby="impact-title">
+            <span class="impact-spark" aria-hidden="true">✳</span>
+            <div class="eyebrow">PEQUEÑOS CAMBIOS, GRANDES PASOS</div>
+            <h2 id="impact-title">Dale tiempo <br>a lo que importa.</h2>
+            <p id="impact-copy">Descubre el efecto de tus abonos extraordinarios.</p>
+
+            <div class="impact-metrics">
+              <div>
+                <span>Intereses que ahorras</span>
+                <strong id="interest-saved">—</strong>
+              </div>
+              <div>
+                <span>Interés total a pagar</span>
+                <strong id="total-interest">—</strong>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <details id="plan" class="plan-card">
+          <summary>
+            <div>
+              <span class="eyebrow">SIN LETRA PEQUEÑA</span>
+              <h2>Tu plan, cuota a cuota</h2>
+            </div>
+            <span class="expand-label">Ver detalle <span aria-hidden="true">↗</span></span>
+          </summary>
+
+          <div class="plan-content">
+            <div class="table-scroll">
+              <table>
+                <caption class="sr-only">Plan de amortización mensual en COP</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Mes</th>
+                    <th scope="col">Saldo inicial</th>
+                    <th scope="col">Capital total</th>
+                    <th scope="col">Intereses</th>
+                    <th scope="col">Extra incluido</th>
+                    <th scope="col">Seguro</th>
+                    <th scope="col">Pago del mes</th>
+                    <th scope="col">Saldo final</th>
+                  </tr>
+                </thead>
+                <tbody id="amortization-body"></tbody>
+              </table>
+            </div>
+
+            <div class="pagination">
+              <span id="page-label"></span>
+              <div>
+                <button id="prev-page" class="quiet-button" type="button">← Anterior</button>
+                <button id="next-page" class="quiet-button" type="button">Siguiente →</button>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <footer class="results-footer">
+          <p>
+            Una proyección para decidir mejor.<br>
+            <span>Los valores finales dependen de las condiciones de tu entidad.</span>
+          </p>
+
+          <button id="download" class="primary-button" type="button" disabled>
+            <span aria-hidden="true">↓</span>
+            <span>Descargar mi plan</span>
+          </button>
+        </footer>
+
+        <span id="download-status" class="download-status" role="status"></span>
+      </section>
+    </div>
+
+    <footer class="page-footer">
+      <span>finia<span class="footer-dot">.</span></span>
+      <p>Más claridad hoy. Más posibilidades mañana.</p>
+      <small>SIMULADOR DE CRÉDITO · COP</small>
+    </footer>
+  </main>
+
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <button id="close-help" class="icon-button close-help" aria-label="Cerrar ayuda" type="button">×</button>
+    <div class="eyebrow">CONOCE TU SIMULACIÓN</div>
+    <h2 id="help-title">Los números, claros.</h2>
+    <p>La tasa que ingresas es efectiva anual (EA). La convertimos a una tasa mensual para calcular una cuota financiera fija.</p>
+    <p>El seguro se suma a esa cuota. Los abonos extraordinarios se aplican cada mes para reducir el plazo. La última cuota puede variar unos centavos para cancelar el saldo exacto.</p>
+    <p>La cuota fija del resumen no incluye los abonos extras; el detalle mensual muestra el pago completo. Con tasa de 0 %, no pagas intereses y el seguro se calcula por separado.</p>
+    <p>La proyección de fechas parte de la fecha de tu primera cuota y no ajusta días festivos. Estas vistas previas no se guardan en tu cuenta.</p>
+  </dialog>
+</body>
+</html>
