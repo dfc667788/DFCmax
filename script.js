@@ -280,7 +280,7 @@
   }
 
   async function fetchPreview(params, signal) {
-   const response = await fetch("http://127.0.0.1:8000/previsualizar-credito", {
+   const response = await fetch("https://dfcmax.onrender.com", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
@@ -1096,7 +1096,7 @@
     $("download-status").textContent = "Preparando tu plan…";
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/previsualizar-credito/excel", {
+      const response = await fetch("https://dfcmax.onrender.com/excel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),
