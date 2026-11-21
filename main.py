@@ -4,6 +4,7 @@ from decimal import Decimal, ROUND_HALF_UP, localcontext
 from io import BytesIO
 from pathlib import Path
 from uuid import UUID, uuid4
+from typing import Annotated, Literal
 
 import httpx
 from dotenv import load_dotenv
@@ -19,10 +20,12 @@ load_dotenv(Path(__file__).with_name(".env"))
 app = FastAPI(title="Finia API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[origin.strip() for origin in os.getenv(
+        "FINIA_FRONTEND_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",") if origin.strip()],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 logger = logging.getLogger(__name__)
 supabase: Client | None = None
@@ -30,13 +33,25 @@ CENTAVO = Decimal("0.01")
 PRECISION_TASA = Decimal("0.00000001")
 VERSION_CALCULO = "frances-ea-v2"
 PLAZO_MAXIMO_MESES = 1200
-DIRECTORIO_WEB = Path(__file__).resolve().parent
+DIRECTORIO_PROYECTO = Path(__file__).resolve().parent
+DIRECTORIO_WEB = DIRECTORIO_PROYECTO / "frontend"
 app.mount("/assets", StaticFiles(directory=DIRECTORIO_WEB), name="assets")
 
 
 @app.get("/simulador", include_in_schema=False)
 def interfaz_simulador():
-    return FileResponse(DIRECTORIO_WEB / "index.html")
+    pagina_actual = DIRECTORIO_PROYECTO / "index.html"
+    return FileResponse(pagina_actual if pagina_actual.is_file() else DIRECTORIO_WEB / "index.html")
+
+
+@app.get("/estilos.css", include_in_schema=False)
+def estilos_pagina_actual():
+    return FileResponse(DIRECTORIO_PROYECTO / "estilos.css", media_type="text/css")
+
+
+@app.get("/script.js", include_in_schema=False)
+def javascript_pagina_actual():
+    return FileResponse(DIRECTORIO_PROYECTO / "script.js", media_type="text/javascript")
 
 
 @app.exception_handler(RequestValidationError)
@@ -264,43 +279,69 @@ def guardar_simulacion(
     return identificador
 
 
-def generar_excel(resultado: SimulacionCreditoSalida) -> bytes:
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Font, PatternFill
-    from openpyxl.utils import get_column_letter
+def generar_excel(resultado: SimulacionCreditoSalida, datos: SimulacionCreditoEntrada | None = None) -> bytes:
+    from credito_excel import crear_libro_credito
+    comparacion = None
+    if datos is not None and datos.pago_extraordinario > 0:
+        comparacion = calcular_simulacion(datos.model_copy(update={"pago_extraordinario": 0}))
+    return crear_libro_credito(resultado, datos, comparacion)
 
-    libro = Workbook()
-    hoja = libro.active
-    hoja.title = "Amortización"
-    hoja.append([
-        "Mes", "Saldo Inicial", "Abono a Capital", "Pago Interés",
-        "Abono Extraordinario", "Seguro Vida", "Cuota Total", "Saldo Restante",
-    ])
-    for fila in resultado.tabla_amortizacion:
-        hoja.append([
-            fila.mes, fila.saldo_inicial, fila.pago_capital, fila.pago_interes,
-            fila.pago_extraordinario, fila.seguro_vida, fila.cuota, fila.saldo_final,
-        ])
-    hoja.freeze_panes = "A2"
-    hoja.auto_filter.ref = hoja.dimensions
-    for celda in hoja[1]:
-        celda.font = Font(bold=True, color="FFFFFF")
-        celda.fill = PatternFill("solid", fgColor="1F4E78")
-        celda.alignment = Alignment(horizontal="center")
-    for columna in range(1, 9):
-        hoja.column_dimensions[get_column_letter(columna)].width = 24
-        if columna > 1:
-            for fila in hoja.iter_rows(min_row=2, min_col=columna, max_col=columna):
-                fila[0].number_format = '"$"#,##0.00'
-    resumen = libro.create_sheet("Resumen")
-    for nombre in ["tipo_credito", "cuota_mensual", "cuota_financiera", "seguro_mensual",
-                   "total_intereses", "total_seguros", "costo_total_prestamo", "plazo_real_meses"]:
-        resumen.append([nombre, getattr(resultado, nombre)])
-    resumen.column_dimensions["A"].width = 28
-    resumen.column_dimensions["B"].width = 32
-    buffer = BytesIO()
-    libro.save(buffer)
-    return buffer.getvalue()
+
+class DiagnosticoFinancieroEntrada(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    empresa_id: UUID
+    origen: Literal["web"] = "web"
+    nombre_empresa: str | None = Field(default=None, min_length=1, max_length=200)
+    sector_economico: str | None = Field(default=None, min_length=1, max_length=150)
+    modelos_negocio: list[Annotated[str, Field(min_length=1, max_length=100)]] | None = Field(default=None, max_length=20)
+    canales_venta: list[Annotated[str, Field(min_length=1, max_length=100)]] | None = Field(default=None, max_length=50)
+    correo_contacto: str | None = Field(default=None, max_length=254, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    desafio_declarado: str = Field(min_length=1, max_length=4000)
+    ingresos_mensuales: Decimal = Field(ge=0, max_digits=18, decimal_places=2, allow_inf_nan=False)
+    gastos_mensuales: Decimal = Field(ge=0, max_digits=18, decimal_places=2, allow_inf_nan=False)
+    servicio_deuda_mensual: Decimal = Field(ge=0, max_digits=18, decimal_places=2, allow_inf_nan=False)
+    flujo_caja_mensual: Decimal = Field(max_digits=18, decimal_places=2, allow_inf_nan=False)
+
+
+class DiagnosticoFinancieroSalida(BaseModel):
+    id: UUID
+    empresa_id: UUID
+    estado: Literal["preliminar"]
+
+
+@app.post("/diagnosticos-financieros", status_code=201, response_model=DiagnosticoFinancieroSalida)
+def crear_diagnostico_financiero(
+    datos: DiagnosticoFinancieroEntrada,
+    cliente: Client = Depends(obtener_supabase),
+    usuario_id: UUID | None = Depends(obtener_usuario_id),
+):
+    if usuario_id is None:
+        raise HTTPException(401, "Inicia sesión para guardar el formulario.", headers={"WWW-Authenticate": "Bearer"})
+
+    try:
+        empresa = cliente.table("empresas").select("id").eq(
+            "id", str(datos.empresa_id)
+        ).eq("propietario_usuario_id", str(usuario_id)).limit(1).execute()
+    except Exception as error:
+        logger.error("No se pudo verificar la empresa (%s)", type(error).__name__)
+        raise HTTPException(503, "No se pudo verificar el acceso a la empresa.") from None
+
+    if not empresa.data:
+        raise HTTPException(403, "No tienes acceso a esta empresa.")
+
+    identificador = uuid4()
+    registro = datos.model_dump(mode="json", exclude_unset=True)
+    registro["origen"] = datos.origen
+    # Se captura el formulario; el motor de diagnóstico evaluará el puntaje después.
+    registro.update(id=str(identificador), estado="preliminar", puntaje_salud=None)
+    try:
+        cliente.table("diagnosticos_financieros").insert(registro, returning="minimal").execute()
+    except Exception as error:
+        logger.error("Guardado de diagnóstico %s falló (%s)", identificador, type(error).__name__)
+        raise HTTPException(503, "No se pudo confirmar el guardado del formulario.") from None
+
+    return DiagnosticoFinancieroSalida(id=identificador, empresa_id=datos.empresa_id, estado="preliminar")
 
 
 @app.post("/previsualizar-credito", response_model=SimulacionCreditoSalida)
@@ -312,7 +353,7 @@ def previsualizar_credito(datos: SimulacionCreditoEntrada):
 @app.post("/previsualizar-credito/excel")
 def descargar_previsualizacion(datos: SimulacionCreditoEntrada):
     return Response(
-        content=generar_excel(calcular_simulacion(datos)),
+        content=generar_excel(calcular_simulacion(datos), datos),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": 'attachment; filename="Plan_Finia.xlsx"'},
     )
@@ -336,7 +377,7 @@ def exportar_simulacion(
     usuario_id: UUID | None = Depends(obtener_usuario_id),
 ):
     resultado = calcular_simulacion(datos)
-    contenido = generar_excel(resultado)
+    contenido = generar_excel(resultado, datos)
     identificador = guardar_simulacion(datos, resultado, cliente, usuario_id)
     return Response(
         content=contenido,
