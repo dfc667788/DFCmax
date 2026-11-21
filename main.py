@@ -35,7 +35,8 @@ VERSION_CALCULO = "frances-ea-v2"
 PLAZO_MAXIMO_MESES = 1200
 DIRECTORIO_PROYECTO = Path(__file__).resolve().parent
 DIRECTORIO_WEB = DIRECTORIO_PROYECTO / "frontend"
-app.mount("/assets", StaticFiles(directory=DIRECTORIO_WEB), name="assets")
+if DIRECTORIO_WEB.is_dir():
+    app.mount("/assets", StaticFiles(directory=DIRECTORIO_WEB), name="assets")
 
 
 @app.get("/simulador", include_in_schema=False)
@@ -385,3 +386,4 @@ def exportar_simulacion(
         headers={"Content-Disposition": 'attachment; filename="Simulacion_credito.xlsx"',
                  "X-Simulacion-Id": str(identificador)},
     )
+
